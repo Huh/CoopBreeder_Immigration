@@ -12,7 +12,7 @@
   require(mcmcplots)
   require(dplyr)
   
-  #load.module("glm")
+  load.module("glm")
   
   setwd("G:/My Drive/1 University of Montana/Immigration_Hypothesis_Testing/Models")
   load("./Input/ID_imms.RData")
@@ -50,17 +50,19 @@
     #  Likelihhod with random effect for pack
     for(i in 1:nrow) {
       y[i] ~ dbin(p[i], packd[i])
-      logit(p[i]) <- alpha[PCK[i]] + B0 + B1 * HARV[i]
-      # logit(p[i]) <- alpha[YR[i]] + B0 + B1 * HARV[i]
+      for(j in 1:npack) {
+        logit(p[i,j]) <- alpha[j] + B1 * HARV[i]   #alpha[PCK[i]]
+        # now the indexing is all screwed up. need to figure this out.
+      }
     }
 
+
     #  Priors for fixed effects
-    B0 ~ dnorm(0, 0.35)
     B1 ~ dnorm(0, 0.35)
 
     #  Priors for random effect of pack
     for(j in 1:npack) {
-      alpha[j] ~ dnorm(0, tau.alpha)
+      alpha[j] ~ dnorm(0, sd.tau)
     }
     # #  Priors for random effect of year
     # for(j in 1:YR) {
@@ -68,14 +70,18 @@
     # }
 
     #  Hyperprior for random effect of pack
-    tau.alpha ~ dgamma(0.01, 0.01) #dunif(0, 200) #it doesn't like the uniform prior
-    sd.alpha <- sqrt(1/tau.alpha)
+    sd.alpha ~ dunif(0, 200)
+    sd.tau <- 1/(sd.alpha^2)
+    #tau.alpha ~ dscaled.gamma(sd.tau, df)  # what the heck should the values of these parameters be?!
+    #tau.alpha ~ dgamma(0.01, 0.01) # this works-ish but 95%CRI = 0 - 800 so...
+    #tau.alpha ~ dunif(0, 200) # definitely not working on precision
+    #sd.alpha <- sqrt(1/tau.alpha)
 
     #  Derived parameters
     #  Proportion of immigrants in each pack when harvest did & did not occur
     for(k in 1:2) {
       for(p in 1:npack) {   # also try YR
-        ind.imm[k, p] <- 1/(1 + exp(-(alpha[p] + B0 + B1 *(k - 1))))
+        ind.imm[k, p] <- 1/(1 + exp(-(alpha[p] + B1 *(k - 1))))
       }
     }
 
@@ -96,7 +102,7 @@
       B1 = runif(1, -1, 1)
     )
   }
-  params <- c("B0", "B1", "alpha", "tau.alpha", "sd.alpha", "mean.imm") #"ind.imm", 
+  params <- c("B1", "alpha", "sd.tau", "sd.alpha", "mean.imm") #"ind.imm", 
   
   #  MCMC settings
   ni <- 25000
@@ -111,7 +117,7 @@
   
   print(out, dig = 2)
   
-  mcmcplot(out)
+  #mcmcplot(out)
   
   
   
