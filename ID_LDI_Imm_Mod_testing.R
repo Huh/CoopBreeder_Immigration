@@ -91,6 +91,7 @@
     # }
 
 
+
     ##  Priors
     #  Fixed effects
     B1 ~ dnorm(0, 0.35)  # Harvest (Y/N)
