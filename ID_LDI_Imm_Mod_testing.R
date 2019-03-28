@@ -110,13 +110,15 @@
     #  Proportion of immigrants in each pack when harvest did & did not occur
     for(k in 1:2) {
       for(p in 1:npack) {   # also try YR
-        ind.imm[k, p] <- 1/(1 + exp(-(alpha[p] + B1 *(k - 1))))
+        pack.imm[k, p] <- 1/(1 + exp(-(alpha[p] + B1 *(k - 1))))
       }
     }
+    #  Why is it estimating a value for packs that did not exist at certain times?
+    #  e.g., pack 12 was not sampled when harvest occured but there's still an estimate for it.
 
     #  Mean proportion of immigrants across packs when harvest did & did not occur
     for(k in 1:2) {
-      mean.imm[k] <- mean(ind.imm[k,])
+      mean.imm[k] <- mean(pack.imm[k,])
     }
 
       }
@@ -130,7 +132,7 @@
       B1 = runif(1, -1, 1)
     )
   }
-  params <- c("B1", "alpha", "sd.tau", "sd.alpha", "mean.imm") #"ind.imm", 
+  params <- c("B1", "alpha", "sd.tau", "sd.alpha", "pack.imm", "mean.imm") 
   
   #  MCMC settings
   ni <- 50000
@@ -145,7 +147,7 @@
   
   print(out, dig = 2)
   
-  mcmcplot(out)
+  #mcmcplot(out)
   
   
   
