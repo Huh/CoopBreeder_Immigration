@@ -45,7 +45,7 @@
 ################################################################################   
   #####  JAGS model  ####
   
-  sink("./Immigration Models/ID_Density_Harv_rndYr.txt")
+  sink("./Immigration Models/ID_Density_Region_Harv_rndYr.txt")
   cat("
   model {
       
@@ -138,7 +138,7 @@
   #  Call JAGS
   out.den.harv <- jags(win.data, inits, params, n.iter = ni, n.thin = nt, n.burnin = nb, 
               n.chains = nc, progress.bar = "text", jags.module = c("glm","dic"),
-              "./Immigration Models/ID_Density_Harv_rndYr.txt")
+              "./Immigration Models/ID_Density_Region_Harv_rndYr.txt")
   
   print(out.den.harv, dig = 2)
   
