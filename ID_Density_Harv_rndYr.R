@@ -1,7 +1,13 @@
+################################################################################
+
     ##  Harvest and random effect for pack on density of wolves in central Idaho
     ##  Sarah Bassing
     ##  March 2019
+
 ################################################################################
+
+  #  Model tests for effect of harvest (Y/N) on density of wolves in central
+  #  Idaho. This includes a random effects for year.
 
 ################################################################################
   #  Load packages & data  
@@ -28,11 +34,11 @@
   
   win.data <- list(
     "y" = IDdensity$density,
-    "YR" = as.numeric(as.factor(IDdensity$Year)), 
+    "YR" = as.numeric(as.factor(IDdensity$Year  - 2007)), 
     "AREA" = as.numeric(as.factor(IDdensity$Region)) - 1,
     "HARV" = IDdensity$Harvest - 1, 
     "SRVY" = as.numeric(IDdensity$nSites),
-    "nyear" = length(IDdensity$Year),
+    "nyear" = length(unique(IDdensity$Year)),
     "nrow" = nrow
   )
 
@@ -58,14 +64,14 @@
       
 
       #  Specify priors
-      #  Fixed effect: Harvest (Y/N)
-      B1 ~ dnorm(0, 0.35)
+      #  Fixed effects 
+      B1 ~ dnorm(0, 0.35)  # Harvest (Y/N)
 
       #  Precision on normal distribution
       tau ~ dgamma(0.001, 0.001)
       sigma <- sqrt(1/tau)
 
-      #  Random effect for year
+      #  Random effect for year  
       for(yr in 1:nyear) {
         alpha[yr] ~ dnorm(0, tau.alpha)
       }
@@ -76,17 +82,30 @@
 
 
       #  Derived parameters
-      #  Annual density when harvest did and did not occur
+      #  Annual density when harvest did and did not occur in each study area
+
+
+      ###  THIS ISN'T QUITE RIGHT B/C THERE SHOULDN'T BE A HARVEST/NO HARVEST FOR EACH YEAR
+      ###  HOW DO I ADJUST FOR UNBALANCED YEARS OF HARVEST?
+
+
       for(h in 1:2) {
         for(yr in 1:nyear) {
           harv.den[h, yr] <- alpha[yr] + B1 * (h - 1)
         }
       }
-
+      
       #  Mean density when harvest did and did not occur
       for(h in 1:2) {
         mean.den[h] <- mean(harv.den[h,])
       }
+
+      # #  Individual estiamtes for each year and study area
+      #   for(i in 1:nrow) {
+      #     harv.den[i] <- alpha[YR[i]] + B1 * HARV[i]
+      #   }
+      # now what... hard code which harv.den estimates should be averaged together
+      # to get at mean density with and without harvest?  Ewwww
 
 
       }", fill = TRUE)
@@ -100,12 +119,12 @@
       B1 = runif(1, -1, 1)
     )
   }
-  params <- c("B1", "alpha", "tau", "sigma", "sd.alpha", "tau.alpha", "harv.den", "mean.den") 
+  params <- c("B1", "alpha", "tau", "sigma", "sd.alpha", "tau.alpha", "mean.den", "harv.den")  #
   
   #  MCMC settings
-  ni <- 50000
+  ni <- 500
   nt <- 1
-  nb <- 40000
+  nb <- 400
   nc <- 3
   
   #  Call JAGS
@@ -115,4 +134,7 @@
   
   print(out.den.harv, dig = 2)
   
-  mcmcplot(out.den.harv)
+  # mcmcplot(out.den.harv)
+  
+  #   WHY DOES THIS SAY THERE'S A POSITIVE EFFECT OF HARVEST ON DENSITY? 
+  #   I'M SO CONFUSSED!  AND WHY IS IT UNDERESTIMATING DENSITY PRE-HARVEST?
